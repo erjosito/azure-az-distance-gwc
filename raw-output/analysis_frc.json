@@ -1,0 +1,39 @@
+{
+  "documented_straight_line_z2z3_km": 32.1,
+  "backbone_empirical_slope_ms_per_km": 0.01930911114953412,
+  "straight_fibre_slope_ms_per_km": 0.0098,
+  "az_routing_detour_factor": 3.13,
+  "note": "Latency measures fibre path; detour calibrated from one documented campus pair. Zone-to-campus correspondence assumed, not proven.",
+  "pairs": [
+    {
+      "pair": "zone1-zone2",
+      "min_rtt_ms": 0.87,
+      "baseline_ms": 0.375,
+      "propagation_ms": 0.495,
+      "dist_backbone_slope_km": 25.6,
+      "dist_straight_fibre_km": 50.5,
+      "path": "x64 (D2d_v4)",
+      "straight_line_est_km": 16.1
+    },
+    {
+      "pair": "zone1-zone3",
+      "min_rtt_ms": 0.862,
+      "baseline_ms": 0.153,
+      "propagation_ms": 0.709,
+      "dist_backbone_slope_km": 36.7,
+      "dist_straight_fibre_km": 72.3,
+      "path": "arm (D2ps_v6)",
+      "straight_line_est_km": 23.1
+    },
+    {
+      "pair": "zone2-zone3",
+      "min_rtt_ms": 1.351,
+      "baseline_ms": 0.366,
+      "propagation_ms": 0.985,
+      "dist_backbone_slope_km": 51.0,
+      "dist_straight_fibre_km": 100.5,
+      "path": "mixed x64<->arm",
+      "straight_line_est_km": 32.1
+    }
+  ]
+}

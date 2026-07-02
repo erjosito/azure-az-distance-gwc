@@ -1,0 +1,17 @@
+src,dst,transport,min_ms,avg_ms,max_ms,mdev_ms
+d-z1a,d-z1b,intra-vnet-private,0.376,0.904,20.339,1.381
+d-z1a,d-z2,intra-vnet-private,0.87,1.341,29.813,1.596
+d-z1a,p-z1a,intra-vnet-private,0.371,0.664,23.989,0.809
+d-z1b,d-z1a,intra-vnet-private,0.375,0.838,21.608,1.745
+d-z1b,d-z2,intra-vnet-private,0.949,1.447,20.321,1.531
+d-z2,d-z1a,intra-vnet-private,0.883,1.366,24.146,1.617
+d-z2,d-z1b,intra-vnet-private,0.938,1.487,14.984,1.255
+d-z2,p-z3,intra-vnet-private,1.372,1.845,20.319,1.191
+p-z1a,d-z1a,intra-vnet-private,0.366,0.6,20.911,0.506
+p-z1a,p-z1b,intra-vnet-private,0.162,0.39,4.914,0.54
+p-z1a,p-z3,intra-vnet-private,0.862,1.293,7.105,0.902
+p-z1b,p-z1a,intra-vnet-private,0.153,0.4,5.761,0.627
+p-z1b,p-z3,intra-vnet-private,0.886,1.292,8.621,0.93
+p-z3,d-z2,intra-vnet-private,1.351,1.692,20.214,1.049
+p-z3,p-z1a,intra-vnet-private,0.865,1.252,7.407,0.854
+p-z3,p-z1b,intra-vnet-private,0.897,1.184,7.466,0.726

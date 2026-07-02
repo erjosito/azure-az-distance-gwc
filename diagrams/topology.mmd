@@ -1,0 +1,24 @@
+%% Germany West Central inter-AZ latency lab topology
+graph TB
+    subgraph GWC["Germany West Central (Frankfurt) - AZ measurement"]
+        Z1A["gwc-z1a<br/>Zone 1"]
+        Z1B["gwc-z1b<br/>Zone 1"]
+        Z2["gwc-z2<br/>Zone 2"]
+        Z3["gwc-z3<br/>Zone 3"]
+    end
+    subgraph CAL["Calibration mesh (backbone anchors)"]
+        CHN["Switzerland North<br/>Zurich ~304 km"]
+        WEU["West Europe<br/>Amsterdam ~363 km"]
+        FRC["France Central<br/>Paris ~478 km"]
+        NEU["North Europe<br/>Dublin ~1088 km"]
+        SEC["Sweden Central<br/>Gavle ~1288 km"]
+    end
+    Z1A -.intra-VNet.- Z1B
+    Z1A -.intra-VNet.- Z2
+    Z1A -.intra-VNet.- Z3
+    Z2 -.intra-VNet.- Z3
+    Z1A ==backbone==> CHN
+    Z1A ==backbone==> WEU
+    Z1A ==backbone==> FRC
+    Z1A ==backbone==> NEU
+    Z1A ==backbone==> SEC

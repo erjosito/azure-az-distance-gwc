@@ -1,0 +1,56 @@
+[
+  {
+    "name": "vm-neu",
+    "nic": "/subscriptions/SUBSCRIPTION_ID_REDACTED/resourceGroups/lab-azdist-20260702/providers/Microsoft.Network/networkInterfaces/vm-neuVMNic",
+    "priv": "10.66.0.4",
+    "pub": "PUBLIC_IP_REDACTED"
+  },
+  {
+    "name": "vm-weu",
+    "nic": "/subscriptions/SUBSCRIPTION_ID_REDACTED/resourceGroups/lab-azdist-20260702/providers/Microsoft.Network/networkInterfaces/vm-weuVMNic",
+    "priv": "10.62.0.4",
+    "pub": "PUBLIC_IP_REDACTED"
+  },
+  {
+    "name": "vm-frc",
+    "nic": "/subscriptions/SUBSCRIPTION_ID_REDACTED/resourceGroups/lab-azdist-20260702/providers/Microsoft.Network/networkInterfaces/vm-frcVMNic",
+    "priv": "10.63.0.4",
+    "pub": "PUBLIC_IP_REDACTED"
+  },
+  {
+    "name": "vm-chn",
+    "nic": "/subscriptions/SUBSCRIPTION_ID_REDACTED/resourceGroups/lab-azdist-20260702/providers/Microsoft.Network/networkInterfaces/vm-chnVMNic",
+    "priv": "10.61.0.4",
+    "pub": "PUBLIC_IP_REDACTED"
+  },
+  {
+    "name": "gwc-z1a",
+    "nic": "/subscriptions/SUBSCRIPTION_ID_REDACTED/resourceGroups/lab-azdist-20260702/providers/Microsoft.Network/networkInterfaces/gwc-z1aVMNic",
+    "priv": "10.60.0.4",
+    "pub": "PUBLIC_IP_REDACTED"
+  },
+  {
+    "name": "gwc-z1b",
+    "nic": "/subscriptions/SUBSCRIPTION_ID_REDACTED/resourceGroups/lab-azdist-20260702/providers/Microsoft.Network/networkInterfaces/gwc-z1bVMNic",
+    "priv": "10.60.0.5",
+    "pub": "PUBLIC_IP_REDACTED"
+  },
+  {
+    "name": "gwc-z2",
+    "nic": "/subscriptions/SUBSCRIPTION_ID_REDACTED/resourceGroups/lab-azdist-20260702/providers/Microsoft.Network/networkInterfaces/gwc-z2VMNic",
+    "priv": "10.60.0.6",
+    "pub": "PUBLIC_IP_REDACTED"
+  },
+  {
+    "name": "gwc-z3",
+    "nic": "/subscriptions/SUBSCRIPTION_ID_REDACTED/resourceGroups/lab-azdist-20260702/providers/Microsoft.Network/networkInterfaces/gwc-z3VMNic",
+    "priv": "10.60.0.7",
+    "pub": "PUBLIC_IP_REDACTED"
+  },
+  {
+    "name": "vm-sec",
+    "nic": "/subscriptions/SUBSCRIPTION_ID_REDACTED/resourceGroups/lab-azdist-20260702/providers/Microsoft.Network/networkInterfaces/vm-secVMNic",
+    "priv": "10.67.0.4",
+    "pub": "PUBLIC_IP_REDACTED"
+  }
+]

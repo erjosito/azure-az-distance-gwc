@@ -1,0 +1,7 @@
+#cloud-config
+package_update: true
+packages:
+  - sockperf
+  - iputils-ping
+runcmd:
+  - [ sysctl, -w, net.ipv4.icmp_echo_ignore_broadcasts=0 ]

@@ -13,12 +13,12 @@ in practice means **less than roughly 100 km and under about 2 ms round-trip**. 
 tightens that envelope with a measurement-backed estimate.
 
 > **Result in one line:** the three distinct AZs in Germany West Central sit on roughly
-> **21 to 37 km of fibre one way** (order ~7 to 12 km straight-line), all comfortably inside
-> Microsoft's published availability-zone envelope. A France Central run cross-checked against
-> public datacenter-location records (Journal du Net, PeeringDB) shows what latency really
-> measures: the **fibre/network path**, which for the widest Paris pair is ~100 km of fibre
-> reconciling with a documented ~32 km straight-line separation, i.e. a ~3x routing detour.
-> See sections 6 and 7.
+> **21 to 37 km of fibre one way** (the hard, latency-derived numbers), which converts to a
+> straight-line separation of about **7 to 19 km** depending on the routing-detour factor
+> applied. Two independent detour factors bracket that range: **1.97x** derived from this
+> lab's own backbone calibration (section 4), and **3.1x** derived from France Central's
+> public datacenter-location records (section 7). Every number below is annotated with the
+> source or formula it comes from. See sections 5 to 7.
 
 All confidential material (subscription and tenant identifiers, public IP addresses, SSH
 keys) has been redacted. Private RFC1918 addresses are retained because they are not
@@ -127,8 +127,11 @@ stable fit.
    each cross-zone pair to isolate the **propagation** component.
 6. **Infer.** Convert each cross-zone propagation floor to a **fibre-path length** by
    dividing by the speed of light in fibre (0.0098 ms/km RTT). Recovering the physical
-   straight-line distance then requires dividing by a routing detour factor, which the
-   France Central public-records cross-check in section 7 calibrates at roughly 3x.
+   straight-line distance then requires dividing by a routing detour factor. This report
+   applies **two independently derived detour factors** as a band: **1.97x** from the
+   backbone calibration (section 4, formula: empirical slope / theoretical fibre slope) and
+   **3.1x** from France Central public records (section 7, formula: measured fibre path /
+   records-based straight-line distance).
 
 Everything is reproducible from `scripts/measure.py` (collection) and `scripts/analyze.py`
 (calibration + inference), with the France Central validation in `scripts/measure_frc.py`,
@@ -162,41 +165,64 @@ to 1600 km.
 | Gavle - Dublin | 1621 | 28.33 |
 
 **Fitted slope: 19.3 microseconds per km RTT (0.0193 ms/km). Intercept: 1.0 ms.**
+(Source: least-squares regression over the 15 region pairs above; see `scripts/analyze.py`.)
 
-Compared with the theoretical straight-fibre round-trip figure of ~9.8 us/km, the recovered
-slope implies an **average routing detour factor of about 1.97x**. In other words, Azure's
-inter-region fibre paths in Europe are on average roughly twice the straight-line distance,
-which is entirely consistent with published long-haul fibre geography (for example the
-well-documented Frankfurt to London financial-trading routes run ~830 km of fibre for a
-~640 km great-circle separation). The physics checks out: our independent measurement
-recovers the speed of light in fibre to within the expected routing overhead.
+The **backbone routing-detour factor** follows directly from that slope:
+
+> **detour(backbone) = empirical slope / theoretical straight-fibre slope
+> = 19.3 us/km / 9.8 us/km = 1.97x.**
+
+Here 9.8 us/km RTT is the speed of light in single-mode fibre (section 1). In other words,
+Azure's inter-region fibre paths in Europe are on average roughly twice the straight-line
+distance, which is entirely consistent with published long-haul fibre geography (for example
+the well-documented Frankfurt to London financial-trading routes run ~830 km of fibre for a
+~640 km great-circle separation, a ~1.3x detour for a dedicated low-latency route; a mixed
+backbone averaging ~2x is expected). The physics checks out: our independent measurement
+recovers the speed of light in fibre to within the expected routing overhead. This 1.97x is
+the more robust of the two detour factors used in this report because it rests on a 15-point
+regression (R-squared 0.95), not a single pair.
 
 ---
 
 ## 5. Germany West Central inter-AZ estimate
 
-Same-zone baseline (gwc-z1a to gwc-z1b, both in zone 1): **min RTT 0.160 ms.** This is the
-non-distance floor.
+Same-zone baseline (gwc-z1a to gwc-z1b, both in zone 1): **min RTT 0.160 ms**
+(source: `scripts/measure.py` output, `raw-output/`). This is the non-distance floor
+(switch fabric, host stack, hypervisor) that is subtracted from every cross-zone pair.
 
-What latency measures directly is the **fibre/network path length** between zones (RTT
-divided by the round-trip speed of light in fibre, 0.0098 ms/km). The physical straight-line
-separation is that path length divided by a **detour factor**. Section 7 calibrates that
-detour at roughly **3x** for Azure metro AZ links, using public datacenter-location records
-in France Central. The straight-line column below therefore divides the fibre path by ~3;
-treat it as an estimate with a wide band, since Frankfurt's fibre layout may differ from
-Paris and Microsoft does not publish Germany West Central coordinates.
+The chain of derivation for each pair, with the source or formula for every number:
 
-| Zone pair | Propagation (ms) | Fibre path (km) | Straight-line est. (km, detour ~3x) |
-|-----------|-----------------:|----------------:|------------------------------------:|
-| Zone 1 - Zone 3 | 0.203 | ~21 | ~7 |
-| Zone 1 - Zone 2 | 0.233 | ~24 | ~8 |
-| Zone 2 - Zone 3 | 0.359 | ~37 | ~12 |
+- **Propagation (ms)** = min cross-zone RTT − 0.160 ms same-zone baseline
+  (source: measured floors in `raw-output/`).
+- **Fibre path (km)** = propagation (ms) / 0.0098 ms/km
+  (formula: round-trip speed of light in single-mode fibre, section 1).
+- **Straight-line (km)** = fibre path / detour factor, shown as a **band** between the two
+  independently derived detours:
+  - lower distance bound uses **detour 3.1x** (France Central metro records, section 7);
+  - upper distance bound uses **detour 1.97x** (backbone regression, section 4).
+
+| Zone pair | Propagation (ms) | Fibre path (km) | Straight-line, /3.1 (km) | Straight-line, /1.97 (km) |
+|-----------|-----------------:|----------------:|-------------------------:|--------------------------:|
+| Zone 1 - Zone 3 | 0.203 | ~21 | ~7  | ~11 |
+| Zone 1 - Zone 2 | 0.233 | ~24 | ~8  | ~12 |
+| Zone 2 - Zone 3 | 0.359 | ~37 | ~12 | ~19 |
+
+Fibre paths are rounded from 0.203/0.0098 = 20.7, 0.233/0.0098 = 23.8, 0.359/0.0098 = 36.6.
+Straight-line columns are those fibre paths divided by 3.1 and by 1.97 respectively.
+
+**Reading the band.** The fibre paths (21/24/37 km) are the hard numbers: they depend only
+on the measured propagation floors and a physical constant. The straight-line separation is
+an estimate spanning roughly **7 to 11 km, 8 to 12 km, and 12 to 19 km** for the three
+pairs. Because Germany West Central's AZs are believed to be **first-party Microsoft-owned
+buildings** (section 7) that Microsoft can connect with its own point-to-point dark fibre,
+their real detour is plausibly closer to the backbone 1.97x than to France Central's
+provider-diverse 3.1x metro paths, biasing the true separation toward the **upper (/1.97)**
+end of each band. That cannot be proven without GWC coordinates, so both bounds are shown.
 
 The ordering is internally consistent (zones 1 and 3 closest, zones 2 and 3 farthest), and
 even the fibre-path figures sit well within Microsoft's published availability-zone envelope
 of under ~100 km, with propagation floors far below the ~2 ms round-trip
-synchronous-replication ceiling. Germany West Central's zones read as tighter than France
-Central's (next sections), a region-specific design choice rather than a universal rule.
+synchronous-replication ceiling.
 
 ---
 
@@ -218,17 +244,32 @@ between an x64 and an Arm VM both pinned to zone 1:
 
 ![France Central validation](diagrams/frc_validation.png)
 
-| Zone pair | Propagation (ms) | Fibre path (km) | Baseline used |
-|-----------|-----------------:|----------------:|---------------|
-| Zone 1 - Zone 2 | 0.495 | ~50 | x64 same-zone (0.375 ms) |
-| Zone 1 - Zone 3 | 0.709 | ~72 | Arm same-zone (0.153 ms) |
-| Zone 2 - Zone 3 | 0.985 | **~100** | mixed-arch same-zone (0.366 ms) |
+| Zone pair | Propagation (ms) | Fibre path (km) | Straight-line, /3.1 (km) | Straight-line, /1.97 (km) | Baseline used |
+|-----------|-----------------:|----------------:|-------------------------:|--------------------------:|---------------|
+| Zone 1 - Zone 2 | 0.495 | ~50  | ~16 | ~25 | x64 same-zone (0.375 ms) |
+| Zone 1 - Zone 3 | 0.709 | ~72  | ~23 | ~37 | Arm same-zone (0.153 ms) |
+| Zone 2 - Zone 3 | 0.985 | **~100** | **~32** | ~51 | mixed-arch same-zone (0.366 ms) |
+
+Fibre paths follow from propagation / 0.0098 ms/km (0.495/0.0098 = 50.5, 0.709/0.0098 = 72.3,
+0.985/0.0098 = 100.5). Straight-line columns divide by 3.1 and 1.97 respectively. The **~32 km**
+in the /3.1 column for the widest pair is not an estimate: it is the records-based ground
+truth (section 7) that *defines* the 3.1x factor, so it appears here by construction.
 
 These fibre-path lengths are robust: they follow directly from the propagation floors and the
 speed of light in fibre. The widest pair (zone 2 to zone 3) rides **~100 km of fibre one
 way**. The open question is how much of that 100 km is genuine physical separation versus
 routing detour. That is exactly what the public location records in the next section pin
 down, and the answer overturns an earlier, too-hasty reading of these numbers.
+
+**A note on the "two campuses" claim.** The smallest France Central pair still rides ~50 km
+of fibre (~16 to 25 km straight-line), nowhere near zero. If France Central really were
+"three AZs over two campuses" (per the 2022 Journal du Net investigation), two of the three
+zones would share a campus and that pair would collapse to roughly the same-zone baseline.
+It does not. The data therefore points to **three genuinely separated sites**, implying
+either a third France Central campus added after 2022 or an imprecision in the two-campus
+reading. This matters for the 3.1x factor: it assumes the widest *measured* pair is the
+La Courneuve to Les Ulis pair, and a third unmapped campus would undermine that assumption
+(section 7 caveats).
 
 ---
 
@@ -255,7 +296,9 @@ Two AZ campuses are documented (three AZs over two campuses, per Journal du Net)
 - **Les Ulis / Courtaboeuf** (south-west of Paris, Essonne), a Colt building described as
   100% dedicated to Microsoft, PeeringDB coordinates ~**48.675 N, 2.196 E**.
 
-The great-circle distance between them is **32 km**, not 100 km.
+The great-circle distance between them is **32 km**
+(source: haversine of the two PeeringDB coordinate pairs above, `scripts/analyze_frc.py`),
+not 100 km.
 
 ### Reconciling 32 km (records) with 100 km (latency)
 
@@ -263,38 +306,63 @@ Both numbers are right; they measure different things. Latency measures the **fi
 (~100 km one way for the widest pair). The records give the **straight-line separation**
 (~32 km). The ratio is the routing detour:
 
-> **detour = 100 km fibre / 32 km straight-line ≈ 3.1x.**
+> **detour(metro, France Central) = 100 km fibre / 32 km straight-line ≈ 3.1x.**
 
-In other words, Azure metro AZ links between north and south Paris run about three times the
-straight-line distance in fibre, materially more indirect than the ~2x measured on the
-long-haul backbone (section 4). That is plausible for provider-diverse metro paths that hairpin
-through central fibre hubs rather than running point to point.
+Here 100 km is the widest-pair fibre path (section 6) and 32 km is the haversine of the two
+PeeringDB campus coordinates above. In other words, Azure metro AZ links between north and
+south Paris run about three times the straight-line distance in fibre, materially more
+indirect than the 1.97x measured on the long-haul backbone (section 4). That is plausible for
+provider-diverse metro paths that hairpin through central fibre hubs rather than running
+point to point.
 
 This corrects an earlier draft of this report, which assumed the ~100 km figure was itself
 the straight-line distance and therefore concluded (wrongly) that AZ fibre runs almost
 straight. The independent 32 km ground truth shows the opposite: **the latency method
-measures the network path, and recovering physical distance requires dividing by a ~3x
-detour.** Applying that detour to the France Central fibre paths gives straight-line estimates
-of roughly **16 km, 23 km, and 32 km**, with the widest pair matching the documented 32 km by
-construction.
+measures the network path, and recovering physical distance requires dividing by a detour
+factor.** Applying the 3.1x detour to the France Central fibre paths gives straight-line
+estimates of roughly **16 km, 23 km, and 32 km** (the /3.1 column of section 6), with the
+widest pair matching the documented 32 km by construction; applying the backbone 1.97x
+instead gives **25 km, 37 km, and 51 km** (the /1.97 column). The true values lie in that
+band, closest to the 3.1x end for the widest pair because that end is anchored to records.
 
-Two honest caveats on this reconciliation:
+Three honest caveats on this reconciliation:
 
 - **Correspondence is assumed, not proven.** Logical zone numbers are subscription-relative,
   so I cannot prove my measured "zone 2 to zone 3" pair is the La Courneuve to Les Ulis pair.
   It is the natural match (both are the widest in their set), but it is an assumption.
-- **The detour is a single calibration point.** One documented pair yields one detour ratio.
-  A third, more distant France Central campus (added after the 2022 investigation) cannot be
-  ruled out, and Germany West Central fibre may detour differently.
+- **The detour is a single calibration point.** One documented pair yields one detour ratio,
+  with no error bar. The backbone 1.97x, by contrast, rests on a 15-pair regression.
+- **A third France Central campus cannot be ruled out.** As section 6 notes, none of the
+  three measured pairs collapses to the same-zone baseline, so all three zones appear
+  separated. If a third campus exists (added after the 2022 investigation), the widest
+  measured pair may not be La Courneuve to Les Ulis at all, which would invalidate the 3.1x
+  derivation. Treat 3.1x as a plausible upper bound on the metro detour, not a fixed constant.
 
 ### What the records say for Germany West Central
 
 Germany West Central's three current AZs are **first-party Microsoft-owned buildings** in the
-Frankfurt metro, and their addresses are in no public registry, so the 21/24/37 km fibre
-paths cannot be verified externally. They are plausible in magnitude for sites spread across
-the Frankfurt area. Note that the large Microsoft cluster under construction in North
-Rhine-Westphalia (Bergheim, Bedburg, Elsdorf, ~7 km apart, ~170 km from Frankfurt) is a
-separate future build, not the current Germany West Central AZs.
+Frankfurt metro, and unlike France Central's third-party colos they do **not** appear as named
+facilities with published coordinates. A dedicated OSINT pass located exactly one candidate
+of the three, at medium confidence, plus the network on-ramps (edge, not compute):
+
+| Finding | Location / coordinates | Evidence & source | Confidence |
+|---------|------------------------|-------------------|------------|
+| **Candidate GWC compute site** | Hattersheim am Main, Voltastraße (Gewerbegebiet Süd), ~**50.063 N, 8.485 E**, ~12 km W of central Frankfurt | OpenStreetMap node 7431711009 tagged `name="Microsoft Azure Rechenzentrum: Deutschland, Westen-Mitte"` (via Nominatim/Overpass, the only Microsoft-named DC node in the Frankfurt bbox), independently corroborated by Wikimapia object #39142690 *"Microsoft Azure Datacenter (Germany West Central) - Hattersheim am Main"* | MEDIUM (two crowdsourced datasets agree on town + region label; not a primary source) |
+| AZ 2 and AZ 3 | not located | no OSM/Wikimapia/permit evidence found for Kelsterbach, Bad Vilbel, Offenbach, Mörfelden-Walldorf, etc. | SPECULATIVE |
+| Microsoft on-ramp (edge, **not** compute) | Interxion/Digital Realty FRA1-27, Hanauer Landstr. 298, **50.119 N, 8.735 E** | PeeringDB `fac/58` + `netfac?net_id=694` (Microsoft AS8075 present) | HIGH (but peering point, not the datacenter) |
+| Microsoft on-ramp (edge, **not** compute) | Equinix FR7, Gutleutstr. 310, **50.097 N, 8.644 E** | PeeringDB `fac/74` + AS8075 netfac record (created 2019-09-06, matches region GA) | HIGH (but peering point, not the datacenter) |
+| Region = Frankfurt metro | Frankfurt am Main | Microsoft News DE: *"...Erweiterung der Rechenzentrumsregion Deutschland, Westen-Mitte in Frankfurt am Main..."* | HIGH (metro only, no address) |
+
+Distances from the one located candidate, for context (haversine on the coordinates above):
+Hattersheim to Equinix FR7 ≈ **12 km**; Hattersheim to Interxion FRA ≈ **19 km**. A compute
+site ~12 km west of the Frankfurt fibre core is **consistent** with the latency-derived
+inter-zone spacing (~7 to 19 km straight-line, section 5), but with only one of three zones
+located it **cannot confirm** the inter-AZ figures. The other two AZs remain unverified, so
+the 21/24/37 km fibre paths still cannot be checked externally.
+
+Note that the large Microsoft cluster under construction in North Rhine-Westphalia (Bergheim,
+Bedburg, Elsdorf, ~7 km apart, ~170 km from Frankfurt) is a **separate future build**, not the
+current Germany West Central AZs, and must not be conflated with them.
 
 ---
 
@@ -304,12 +372,16 @@ This is an **approximation**, not a survey. Treat the numbers as order-of-magnit
 estimates with the following limits:
 
 - **Latency measures fibre path, not straight-line distance.** Converting between them needs
-  a detour factor that is only pinned at one point (~3x, from the France Central records) and
-  may vary by region and by zone pair. Straight-line figures carry a wide band.
+  a detour factor. This report brackets it between **1.97x** (backbone regression, 15 pairs,
+  section 4) and **3.1x** (France Central metro records, one pair, section 7). Straight-line
+  figures are shown as a band, not a single value.
 
-- **Detour factor rests on one calibration point.** The France Central records pin the
-  intra-metro AZ detour at ~3x for one documented pair. A region whose AZ fibre loops through
-  a different meet-me point could differ, so treat straight-line figures as indicative.
+- **The two detour factors disagree, and that gap is real, not noise.** The backbone 1.97x is
+  statistically robust but is a long-haul average; the metro 3.1x is region-appropriate but
+  rests on a single pair whose zone-correspondence is assumed and whose "widest pair" identity
+  is threatened by a possible third France Central campus (section 6). Metro links plausibly
+  detour more than the backbone, but first-party dark fibre between Microsoft-owned buildings
+  could detour less; the truth for Germany West Central is unmeasured.
 - **Zone-to-datacenter mapping is not fixed.** Azure logical zone numbers (1, 2, 3) are
   mapped per-subscription to physical zones, so "zone 2" in this subscription is not
   necessarily "zone 2" in yours. The *distances* between physical zones are what this lab
@@ -320,14 +392,17 @@ estimates with the following limits:
   (biased low).
 - **Metro coordinates are approximate.** Azure does not publish exact datacenter
   coordinates; the calibration uses representative metro centroids, which adds a few
-  percent of noise to the slope.
+  percent of noise to the slope. The one located GWC candidate (Hattersheim) rests on
+  crowdsourced OSM/Wikimapia data, not a primary source.
 - **ICMP is host-timestamped.** Kernel scheduling adds sub-microsecond noise, mitigated by
   taking the minimum over 3000 samples but never fully eliminated.
 
 The headline result: the Germany West Central AZs sit on roughly **21 to 37 km of fibre**
-(order ~7 to 12 km straight-line under a ~3x detour), and in France Central the widest pair
-rides ~100 km of fibre that reconciles with a documented ~32 km straight-line separation
-between the La Courneuve and Les Ulis campuses.
+(the hard, latency-derived numbers), which converts to a straight-line separation of about
+**7 to 19 km** across the 3.1x-to-1.97x detour band, likely toward the wider end given the
+region's probable first-party dark fibre. In France Central the widest pair rides ~100 km of
+fibre that reconciles with a documented ~32 km straight-line separation between the
+La Courneuve and Les Ulis campuses (detour 3.1x).
 
 ---
 
